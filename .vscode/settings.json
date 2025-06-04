@@ -1,0 +1,7 @@
+{
+    "makefile.configureOnOpen": false,
+    "files.associations": {
+        "queue": "cpp",
+        "ostream": "cpp"
+    }
+}
