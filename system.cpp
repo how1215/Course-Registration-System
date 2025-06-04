@@ -4,19 +4,21 @@
 #include <mutex>
 
 std::mutex mtx;
+int shared_count = 0;  // 共享的計數器
 
 class Student{
         private:
         std::string name;
         int id;
-        int count=0;
         // std::vector <CourseSection> courses;
 
     public:
         Student(std::string name, int id):name(name),id(id){}
 
         void increment(){
-            count++;
+            std::lock_guard<std::mutex> lock(mtx);
+            shared_count++;  // 所有執行緒共同增加這個數字
+            std::cout << "Student " << name << " (ID: " << id << ") incremented shared_count to: " << shared_count << std::endl;
         }
         
 };
@@ -45,6 +47,7 @@ int main(){
         t.join();
     }
 
+    std::cout << "Final shared_count value: " << shared_count << std::endl;
     std::cout << "I am master thread and I am about to finish"<< std::endl;
     return 0;
 }
