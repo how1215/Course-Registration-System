@@ -23,11 +23,12 @@ class Student{
         
 };
 
-// class CourseSection{
+class CourseSection{
+    private:
+        
 
 
-
-// };
+};
 
 
 
