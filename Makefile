@@ -1,16 +1,20 @@
 # Makefile for Course Register System
 # 編譯器設定
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -pthread
+CXXFLAGS = -std=c++11 -pthread
 TARGET = system
-SOURCE = system.cpp
+SRCS = system.cpp
+OBJS = $(SRCS:.cpp=.o)
 
 # 預設目標
 all: $(TARGET)
 
 # 編譯規則
-$(TARGET): $(SOURCE)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SOURCE)
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS)
+
+%.o: %.cpp
+	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
 # 執行程式
 run: $(TARGET)
@@ -18,7 +22,7 @@ run: $(TARGET)
 
 # 清理編譯產生的檔案
 clean:
-	rm -f $(TARGET)
+	rm -f $(OBJS) $(TARGET)
 
 # 重新編譯
 rebuild: clean all
