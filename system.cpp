@@ -30,8 +30,8 @@ class CourseSection{
 
 };
 
-
-
+void check_prerequisite(){}
+void check_course_capacity(){}
 
 int main(){
     std::vector<std::thread> threads;
