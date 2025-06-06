@@ -92,25 +92,40 @@ class CourseSection{
     public:       
         CourseSection(const Course& course_registration):open(false),closedOrCancelled(false),course_registration(course_registration),registrationList({}){}
         
-        //學生註冊課程
+        //學生註冊課程（修改為將判斷是分開）
         void requestToRegist(const Student& student){
             //確認有無符合前修課程
             Course* preReq = course_registration.getPrerequisite();
             
             if(student.hasPassedCourse(*preReq)){
-                std::cout<<"已通過所有前修課程，可以註冊此課程！！！"<<std::endl;
+                std::cout<<"已通過所有前修課程，成功註冊此課程！！！"<<std::endl;
+                registrationList.push_back(student);
             }else{
-                std::cout<<"\n請回去重修以下先修課程！！！"<<preReq->getName()<<std::endl;
+                std::cout<<student.getName()<<"\n請回去重修以下先修課程!!!"<<preReq->getName()<<std::endl;
             }
             
+        }
+        //輸出該堂註冊課的註冊學生
+        void printRegistrationList(){
+            std::cout<<"--------------------------------"<<std::endl;
+            std::cout<<"註冊學生數量: "<<registrationList.size()<<std::endl;
+            for(const auto& student : registrationList){
+                std::cout<<"學生: "<<student.getName()<<std::endl;
+            }
+            std::cout<<"--------------------------------"<<std::endl;
+        }
+        //確認課程人數是否已滿
+        void check_course_capacity(){
+            if(registrationList.size() >= course_registration.getMaxCapacity()){
+                std::cout<<"課程人數已滿，無法註冊！！！"<<std::endl;
+            }
         }
 
 };
 
 //確認有無符合前修課程
 void check_prerequisite(){}
-//確認課程人數是否已滿
-void check_course_capacity(){}
+
 
 
 int main(){
@@ -134,10 +149,13 @@ int main(){
         //壞學生(之前全被當)
         Student s6("Nick", 006,{});
         //將課程放上課程網站開放註冊
-        CourseSection c6_section(c6);
+        CourseSection c1_section(c1);
 
-        c6_section.requestToRegist(s6);
-
+        c1.printCourseInfo();
+        c1_section.requestToRegist(s4);
+        c1_section.requestToRegist(s5);
+        c1_section.requestToRegist(s6);
+        c1_section.printRegistrationList();
     
     return 0;
 }
