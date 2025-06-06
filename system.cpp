@@ -94,15 +94,9 @@ class CourseSection{
         
         //學生註冊課程（修改為將判斷是分開）
         void requestToRegist(const Student& student){
-            //確認有無符合前修課程
-            Course* preReq = course_registration.getPrerequisite();
-            
-            if(student.hasPassedCourse(*preReq)){
-                std::cout<<"已通過所有前修課程，成功註冊此課程！！！"<<std::endl;
-                registrationList.push_back(student);
-            }else{
-                std::cout<<student.getName()<<"\n請回去重修以下先修課程!!!"<<preReq->getName()<<std::endl;
-            }
+            //用2個thread分別判斷是否符合前修課程和課程人數是否已滿
+
+
             
         }
         //輸出該堂註冊課的註冊學生
@@ -118,6 +112,17 @@ class CourseSection{
         void check_course_capacity(){
             if(registrationList.size() >= course_registration.getMaxCapacity()){
                 std::cout<<"課程人數已滿，無法註冊！！！"<<std::endl;
+            }
+        }
+        
+        //判斷欲註冊學生是否符合前修課程
+        bool check_prerequisite(const Student& student){
+            Course* preReq = course_registration.getPrerequisite();
+            if(student.hasPassedCourse(*preReq)){
+                std::cout<<"已通過所有前修課程，成功註冊此課程！！！"<<std::endl;
+                registrationList.push_back(student);
+            }else{
+                std::cout<<student.getName()<<"\n請回去重修以下先修課程!!!"<<preReq->getName()<<std::endl;
             }
         }
 
