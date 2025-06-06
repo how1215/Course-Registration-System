@@ -12,9 +12,9 @@ class Course{
         //課程人數上限
         int max_capacity;
         //前修課程
-        std::vector<Course> prerequisite;
+        Course* prerequisite;
     public:
-        Course(const std::string& name, int id, int max_capacity, const std::vector<Course>& prerequisite):name(name),id(id),max_capacity(max_capacity),prerequisite(prerequisite){}
+        Course(const std::string& name, int id, int max_capacity, Course* prerequisite):name(name),id(id),max_capacity(max_capacity),prerequisite(prerequisite){}
 
         std::string getName() const { return name; }
         void setName(const std::string& name) { this->name=name; }
@@ -25,15 +25,15 @@ class Course{
         int getMaxCapacity() const { return max_capacity; }
         void setMaxCapacity(int max_capacity) { this->max_capacity=max_capacity; }
 
-        std::vector<Course> getPrerequisite() const { return prerequisite; }
-        void setPrerequisite(const std::vector<Course>& prerequisite) { this->prerequisite=prerequisite; }
+        Course* getPrerequisite() const { return prerequisite; }
+        void setPrerequisite(Course* prerequisite) { this->prerequisite=prerequisite; }
         //印出課程資訊
         void printCourseInfo(){
             std::cout<<"--------------------------------"<<std::endl;
             std::cout<<"課程名稱: "<<name<<std::endl;
             std::cout<<"課程編號: "<<id<<std::endl;
             std::cout<<"課程人數上限: "<<max_capacity<<std::endl;
-            std::cout<<"前修課程: "<<prerequisite.size()<<std::endl;
+            std::cout<<"前修課程: "<<prerequisite->getName()<<std::endl;
             std::cout<<"--------------------------------"<<std::endl;
         }
 
@@ -68,7 +68,7 @@ class Student{
             std::cout<<"--------------------------------"<<std::endl;
         }
 
-        //比對是否擁有修過某課程
+        //比對學生是否修過某前修課程
         bool hasPassedCourse(const Course& pre_req) const {
             for(const auto& passed : passedCourses){
                 if(passed.getId() == pre_req.getId()){
@@ -76,16 +76,6 @@ class Student{
                 }
             }
             return false;
-        }
-
-        //檢查是否修過所有前修課程
-        bool hasPassedAllPrerequisites(const std::vector<Course>& prerequisites) const {
-            for(const auto& prereq : prerequisites){
-                if(!hasPassedCourse(prereq)){
-                    return false;
-                }
-            }
-            return true;
         }
 
 };
@@ -105,12 +95,12 @@ class CourseSection{
         //學生註冊課程
         void requestToRegist(const Student& student){
             //確認有無符合前修課程
-            auto preReq = course_registration.getPrerequisite();
+            Course* preReq = course_registration.getPrerequisite();
             
-            if(student.hasPassedAllPrerequisites(preReq)){
+            if(student.hasPassedCourse(*preReq)){
                 std::cout<<"已通過所有前修課程，可以註冊此課程！！！"<<std::endl;
             }else{
-                std::cout<<"請回去重修此課程之先修課程！！！"<<std::endl;
+                std::cout<<"\n請回去重修以下先修課程！！！"<<preReq->getName()<<std::endl;
             }
             
         }
@@ -126,13 +116,13 @@ void check_course_capacity(){}
 int main(){
 
         //基礎課程(無前修課程)  
-        Course c1("C++", 101, 3, {});
-        Course c2("Data Structure", 102, 2, {});
-        Course c3("Algorithm", 103, 3, {});
+        Course c1("C++", 101, 3, nullptr);
+        Course c2("Data Structure", 102, 2, nullptr);
+        Course c3("Algorithm", 103, 3, nullptr);
         //進階課程(有前修課程)
-        Course c4("OOP", 201, 3, {c1});
-        Course c5("Advanced Data Structure", 202, 3, {c2});
-        Course c6("Algorithm 2", 203, 3, {c3});
+        Course c4("OOP", 201, 3, &c1);
+        Course c5("Advanced Data Structure", 202, 3, &c2);
+        Course c6("Algorithm 2", 203, 3, &c3);
 
         //新生(無修過任何課程)
         Student s1("Lebron", 001,{});
@@ -146,7 +136,7 @@ int main(){
         //將課程放上課程網站開放註冊
         CourseSection c6_section(c6);
 
-        c6_section.requestToRegist(s4);
+        c6_section.requestToRegist(s6);
 
     
     return 0;
