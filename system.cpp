@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <mutex>
+#include <string>
 
 
 class Course{   
@@ -13,10 +14,10 @@ class Course{
         //前修課程
         std::vector<Course> prerequisite;
     public:
-        Course(std::string name, int id, int max_capacity, std::vector<Course> prerequisite):name(name),id(id),max_capacity(max_capacity),prerequisite(prerequisite){}
+        Course(const std::string& name, int id, int max_capacity, const std::vector<Course>& prerequisite):name(name),id(id),max_capacity(max_capacity),prerequisite(prerequisite){}
 
         std::string getName() const { return name; }
-        void setName(std::string name) { this->name=name; }
+        void setName(const std::string& name) { this->name=name; }
 
         int getId() const { return id; }
         void setId(int id) { this->id=id; }
@@ -25,7 +26,7 @@ class Course{
         void setMaxCapacity(int max_capacity) { this->max_capacity=max_capacity; }
 
         std::vector<Course> getPrerequisite() const { return prerequisite; }
-        void setPrerequisite(std::vector<Course> prerequisite) { this->prerequisite=prerequisite; }
+        void setPrerequisite(const std::vector<Course>& prerequisite) { this->prerequisite=prerequisite; }
         //印出課程資訊
         void printCourseInfo(){
             std::cout<<"--------------------------------"<<std::endl;
@@ -47,16 +48,16 @@ class Student{
         //已選課程
         std::vector<Course> schedule;
     public:
-        Student(std::string name, int id, std::vector<Course> passedCourses):name(name),id(id),passedCourses(passedCourses){}
+        Student(const std::string& name, int id, const std::vector<Course>& passedCourses):name(name),id(id),passedCourses(passedCourses){}
         
         std::string getName() const { return name; }
-        void setName(std::string name) { this->name=name; }
+        void setName(const std::string& name) { this->name=name; }
 
         int getId() const { return id; }
         void setId(int id) { this->id=id; }
 
         std::vector<Course> getPassedCourses() const { return passedCourses; }
-        void setPassedCourses(std::vector<Course> passedCourses)  { this->passedCourses=passedCourses; }
+        void setPassedCourses(const std::vector<Course>& passedCourses)  { this->passedCourses=passedCourses; }
 
         //印出學生資訊
         void printStudentInfo(){
@@ -67,21 +68,51 @@ class Student{
             std::cout<<"--------------------------------"<<std::endl;
         }
 
+        //比對是否擁有修過某課程
+        bool hasPassedCourse(const Course& pre_req) const {
+            for(const auto& passed : passedCourses){
+                if(passed.getId() == pre_req.getId()){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        //檢查是否修過所有前修課程
+        bool hasPassedAllPrerequisites(const std::vector<Course>& prerequisites) const {
+            for(const auto& prereq : prerequisites){
+                if(!hasPassedCourse(prereq)){
+                    return false;
+                }
+            }
+            return true;
+        }
 
 };
 
 class CourseSection{
     private:
 
-        bool open=false;
-        bool closedOrCancelled=false;
-        //
+        bool open;
+        bool closedOrCancelled;
+        //註冊課程
+        Course course_registration;
+        //已註冊學生(預設為空)
         std::vector<Student> registrationList;
     public:       
+        CourseSection(const Course& course_registration):open(false),closedOrCancelled(false),course_registration(course_registration),registrationList({}){}
+        
         //學生註冊課程
-        void registerCourse(Student student, Course course){
+        void requestToRegist(const Student& student){
             //確認有無符合前修課程
-
+            auto preReq = course_registration.getPrerequisite();
+            
+            if(student.hasPassedAllPrerequisites(preReq)){
+                std::cout<<"已通過所有前修課程，可以註冊此課程！！！"<<std::endl;
+            }else{
+                std::cout<<"請回去重修此課程之先修課程！！！"<<std::endl;
+            }
+            
         }
 
 };
@@ -112,8 +143,10 @@ int main(){
         Student s5("Minji", 005,{c1,c2});
         //壞學生(之前全被當)
         Student s6("Nick", 006,{});
-        
-        s4.printStudentInfo();
+        //將課程放上課程網站開放註冊
+        CourseSection c6_section(c6);
+
+        c6_section.requestToRegist(s4);
 
     
     return 0;
