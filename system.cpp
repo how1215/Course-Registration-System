@@ -33,7 +33,11 @@ class Course{
             std::cout<<"課程名稱: "<<name<<std::endl;
             std::cout<<"課程編號: "<<id<<std::endl;
             std::cout<<"課程人數上限: "<<max_capacity<<std::endl;
-            std::cout<<"前修課程: "<<prerequisite->getName()<<std::endl;
+            if(prerequisite != nullptr){
+                std::cout<<"前修課程: "<<prerequisite->getName()<<std::endl;
+            }else{
+                std::cout<<"前修課程: 無"<<std::endl;
+            }
             std::cout<<"--------------------------------"<<std::endl;
         }
 
@@ -77,27 +81,40 @@ class Student{
             }
             return false;
         }
-
 };
 
 class CourseSection{
     private:
-
-        bool open;
-        bool closedOrCancelled;
         //註冊課程
         Course course_registration;
         //已註冊學生(預設為空)
         std::vector<Student> registrationList;
+        //特殊允許學生(預設為空)
+        std::vector<int> special_permission_students_id;
     public:       
-        CourseSection(const Course& course_registration):open(false),closedOrCancelled(false),course_registration(course_registration),registrationList({}){}
-        
+        CourseSection(const Course& course_registration):course_registration(course_registration),registrationList({}),special_permission_students_id({}){}
+
+        //設定特殊允許學生
+        void addSpecialPermissionStudents(const int student_id){
+            this->special_permission_students_id.push_back(student_id);
+        }
+
+
         //學生註冊課程（修改為將判斷是分開）
         void requestToRegist(const Student& student){
+            std::cout<<"--------------------------------"<<std::endl;
+            std::cout<<"學生( "<<student.getName()<<" )正在註冊課程: "<<course_registration.getName()<<std::endl;
             //用2個thread分別判斷是否符合前修課程和課程人數是否已滿
+            std::thread prerequisite_thread(&CourseSection::check_prerequisite, this, student);
+            std::thread capacity_thread(&CourseSection::check_course_capacity, this);
 
-
-            
+            //等待2個thread完成才完成註冊
+            prerequisite_thread.join();
+            capacity_thread.join();
+            //2個條件都符合，則註冊成功
+            registrationList.push_back(student);
+            std::cout<<"學生( "<<student.getName()<<" )註冊課程: "<<course_registration.getName()<<" 成功！！！"<<std::endl;
+            std::cout<<"--------------------------------"<<std::endl;            
         }
         //輸出該堂註冊課的註冊學生
         void printRegistrationList(){
@@ -111,18 +128,45 @@ class CourseSection{
         //確認課程人數是否已滿
         void check_course_capacity(){
             if(registrationList.size() >= course_registration.getMaxCapacity()){
-                std::cout<<"課程人數已滿，無法註冊！！！"<<std::endl;
+                std::cout<<"課程人數已滿，註冊失敗！！！"<<std::endl;
+                //如果課程人數已滿，則退出程式
+                exit(1);
             }
         }
         
+        //確認學生學號是否在特殊允許名單中
+        bool hasSpecialPermission(const Student& student){
+            if(special_permission_students_id.empty()){
+                return false;
+            }
+            for(const auto& id : special_permission_students_id){
+                if(id == student.getId()){
+                    return true;
+                }
+            }
+            return false;
+        }
+
         //判斷欲註冊學生是否符合前修課程
-        bool check_prerequisite(const Student& student){
+        void check_prerequisite(const Student& student){
             Course* preReq = course_registration.getPrerequisite();
-            if(student.hasPassedCourse(*preReq)){
-                std::cout<<"已通過所有前修課程，成功註冊此課程！！！"<<std::endl;
-                registrationList.push_back(student);
+            
+            // 檢查是否有前修課程
+            if(preReq == nullptr){
+                // 沒有前修課程，直接允許註冊
+                std::cout<<"此課程無前修課程要求！！！"<<std::endl;
+            }
+            else if(student.hasPassedCourse(*preReq)){
+                std::cout<<"已通過所有前修課程！！！"<<std::endl;
             }else{
-                std::cout<<student.getName()<<"\n請回去重修以下先修課程!!!"<<preReq->getName()<<std::endl;
+                //若沒修過前修課程，查看學生是否有特殊允許不需前修課程
+                if(hasSpecialPermission(student)){
+                    std::cout<<"教授已給予特殊允許！！！"<<std::endl;
+                }else{
+                    //若沒有特殊允許，則退出程式
+                    std::cout<<student.getName()<<"\n未修過以下先修課程，註冊失敗:"<<preReq->getName()<<std::endl;
+                    exit(1);
+                }
             }
         }
 
@@ -135,15 +179,17 @@ void check_prerequisite(){}
 
 int main(){
 
+        //Course(課堂名稱,課程編號,課程人數上限,前修課程)
         //基礎課程(無前修課程)  
         Course c1("C++", 101, 3, nullptr);
         Course c2("Data Structure", 102, 2, nullptr);
         Course c3("Algorithm", 103, 3, nullptr);
         //進階課程(有前修課程)
         Course c4("OOP", 201, 3, &c1);
-        Course c5("Advanced Data Structure", 202, 3, &c2);
+        Course c5("Advanced Data Structure", 202, 2, &c2);
         Course c6("Algorithm 2", 203, 3, &c3);
 
+        //Student(學生名稱,學生編號,已修過課程)
         //新生(無修過任何課程)
         Student s1("Lebron", 001,{});
         Student s2("Hanni", 002,{});
@@ -152,15 +198,30 @@ int main(){
         Student s4("John", 004,{c1,c2,c3});
         Student s5("Minji", 005,{c1,c2});
         //壞學生(之前全被當)
-        Student s6("Nick", 006,{});
+        Student s6("Nick", 006,{c1});
         //將課程放上課程網站開放註冊
         CourseSection c1_section(c1);
+        CourseSection c2_section(c2);
+        CourseSection c3_section(c3);
+        CourseSection c4_section(c4);
+        CourseSection c5_section(c5);
+        CourseSection c6_section(c6);
 
-        c1.printCourseInfo();
-        c1_section.requestToRegist(s4);
-        c1_section.requestToRegist(s5);
-        c1_section.requestToRegist(s6);
-        c1_section.printRegistrationList();
-    
+
+        // c1.printCourseInfo();
+        // c1_section.requestToRegist(s1);
+        // c1_section.requestToRegist(s2);
+        // c1_section.requestToRegist(s3);
+        
+        // c1_section.printRegistrationList();
+        
+
+        c5.printCourseInfo();
+        //將壞學生用學號加入特殊允許學生
+        c5_section.addSpecialPermissionStudents(006);
+        //壞學生註冊進階課程
+        c5_section.requestToRegist(s6);
+        c5_section.printRegistrationList();
+
     return 0;
 }
